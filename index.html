@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ige Async Worker Pool — Concurrency & Retries</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090e17;
+      --card: #131c2e;
+      --border: #1f2f4e;
+      --accent: #14b8a6;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg); color: var(--text); padding: 2.5rem 1rem;
+      display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+    }
+    .container { max-width: 900px; width: 100%; }
+    .badge {
+      display: inline-block; background: rgba(20, 184, 166, 0.15);
+      border: 1px solid rgba(20, 184, 166, 0.35); color: var(--accent);
+      padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600;
+      text-transform: uppercase; margin-bottom: 1rem;
+    }
+    h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    p.sub { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; line-height: 1.6; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    button {
+      background: linear-gradient(135deg, #0d9488, #14b8a6); color: #000;
+      font-weight: 700; padding: 0.85rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%;
+    }
+    .workers-display { display: flex; gap: 0.5rem; margin: 1rem 0; }
+    .worker-slot {
+      flex: 1; padding: 0.75rem; background: #0b1322; border: 1px solid #1a2a47; border-radius: 8px; text-align: center;
+      font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--muted);
+    }
+    .worker-slot.active { border-color: #14b8a6; color: #14b8a6; background: rgba(20, 184, 166, 0.1); }
+    .log-box {
+      background: #060a12; border: 1px solid #142036; border-radius: 8px;
+      padding: 1rem; height: 220px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">Pure Python AsyncIO</div>
+    <h1>Async Worker Pool Manager</h1>
+    <p class="sub">In-browser simulation of Python asyncio worker pools with bounded concurrency (3 worker slots), exponential backoff retries, and in-memory task queues.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Active Concurrency Slots (Limit: 3)</h3>
+        <div class="workers-display">
+          <div id="w0" class="worker-slot">Worker #1<br>IDLE</div>
+          <div id="w1" class="worker-slot">Worker #2<br>IDLE</div>
+          <div id="w2" class="worker-slot">Worker #3<br>IDLE</div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem;">
+          Pending in Queue: <strong id="queueCount" style="color: #fff;">0</strong>
+        </p>
+        <button onclick="dispatchBatch()">Dispatch Batch of 6 Jobs</button>
+      </div>
+
+      <div class="card">
+        <h3>Worker Pipeline Activity</h3>
+        <div id="activityLog" class="log-box">
+          <div>[Pool Initialized] 3 async worker coroutines running.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let queue = [];
+    let workers = [false, false, false];
+    let jobId = 0;
+
+    function dispatchBatch() {
+      for (let i = 0; i < 6; i++) {
+        jobId++;
+        queue.push({ id: jobId, retries: 0 });
+      }
+      document.getElementById('queueCount').textContent = queue.length;
+      processQueue();
+    }
+
+    function processQueue() {
+      for (let i = 0; i < workers.length; i++) {
+        if (!workers[i] && queue.length > 0) {
+          const job = queue.shift();
+          executeJob(i, job);
+        }
+      }
+      document.getElementById('queueCount').textContent = queue.length;
+    }
+
+    function executeJob(slot, job) {
+      workers[slot] = true;
+      const el = document.getElementById(`w${slot}`);
+      el.className = "worker-slot active";
+      el.innerHTML = `Worker #${slot + 1}<br>Job #${job.id}`;
+
+      const log = document.getElementById('activityLog');
+      log.innerHTML = `<div>[Worker #${slot + 1}] Processing Job #${job.id}...</div>` + log.innerHTML;
+
+      setTimeout(() => {
+        // Random flaky failure with retry
+        if (job.id % 3 === 0 && job.retries === 0) {
+          job.retries++;
+          log.innerHTML = `<div style="color: #f59e0b;">[Worker #${slot + 1}] ⚠️ Job #${job.id} transient failure. Exponential backoff retry...</div>` + log.innerHTML;
+          queue.unshift(job);
+        } else {
+          log.innerHTML = `<div style="color: #10b981;">[Worker #${slot + 1}] ✔ Completed Job #${job.id} successfully.</div>` + log.innerHTML;
+        }
+
+        workers[slot] = false;
+        el.className = "worker-slot";
+        el.innerHTML = `Worker #${slot + 1}<br>IDLE`;
+        processQueue();
+      }, 1200);
+    }
+  </script>
+</body>
+</html>
