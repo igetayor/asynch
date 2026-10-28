@@ -3,129 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ige Async Worker Pool — Concurrency & Retries</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #090e17;
-      --card: #131c2e;
-      --border: #1f2f4e;
-      --accent: #14b8a6;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg); color: var(--text); padding: 2.5rem 1rem;
-      display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-    }
-    .container { max-width: 900px; width: 100%; }
-    .badge {
-      display: inline-block; background: rgba(20, 184, 166, 0.15);
-      border: 1px solid rgba(20, 184, 166, 0.35); color: var(--accent);
-      padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600;
-      text-transform: uppercase; margin-bottom: 1rem;
-    }
-    h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 0.5rem; }
-    p.sub { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; line-height: 1.6; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-    @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
-    button {
-      background: linear-gradient(135deg, #0d9488, #14b8a6); color: #000;
-      font-weight: 700; padding: 0.85rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%;
-    }
-    .workers-display { display: flex; gap: 0.5rem; margin: 1rem 0; }
-    .worker-slot {
-      flex: 1; padding: 0.75rem; background: #0b1322; border: 1px solid #1a2a47; border-radius: 8px; text-align: center;
-      font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--muted);
-    }
-    .worker-slot.active { border-color: #14b8a6; color: #14b8a6; background: rgba(20, 184, 166, 0.1); }
-    .log-box {
-      background: #060a12; border: 1px solid #142036; border-radius: 8px;
-      padding: 1rem; height: 220px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
-    }
-  </style>
+  <title>Ige Async Worker Pool — Resilient Concurrency Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="badge">Pure Python AsyncIO</div>
-    <h1>Async Worker Pool Manager</h1>
-    <p class="sub">In-browser simulation of Python asyncio worker pools with bounded concurrency (3 worker slots), exponential backoff retries, and in-memory task queues.</p>
-
-    <div class="grid">
-      <div class="card">
-        <h3>Active Concurrency Slots (Limit: 3)</h3>
-        <div class="workers-display">
-          <div id="w0" class="worker-slot">Worker #1<br>IDLE</div>
-          <div id="w1" class="worker-slot">Worker #2<br>IDLE</div>
-          <div id="w2" class="worker-slot">Worker #3<br>IDLE</div>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <div class="badge-tag">
+          <span class="pulse-dot"></span>
+          Python 3.10+ AsyncIO Engine
         </div>
-        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem;">
-          Pending in Queue: <strong id="queueCount" style="color: #fff;">0</strong>
+        <h1 class="dashboard-title">Async Worker Pool Manager</h1>
+        <p class="dashboard-sub">
+          High-throughput coroutine worker pool featuring bounded concurrency, priority queue dispatch, exponential backoff retries, and real-time execution telemetry.
         </p>
-        <button onclick="dispatchBatch()">Dispatch Batch of 6 Jobs</button>
       </div>
 
-      <div class="card">
-        <h3>Worker Pipeline Activity</h3>
-        <div id="activityLog" class="log-box">
-          <div>[Pool Initialized] 3 async worker coroutines running.</div>
-        </div>
+      <div class="header-status-pill">
+        <span style="color: var(--text-dim);">PORT:</span>
+        <span style="color: #38bdf8; font-weight: 700;">8091</span>
+        <span style="margin: 0 0.25rem; color: var(--border-subtle);">|</span>
+        <span style="color: #10b981; font-weight: 600;">ACTIVE</span>
       </div>
-    </div>
+    </header>
+
+    <!-- Top Metrics Ribbon -->
+    <section id="metricsContainer" class="metrics-grid">
+      <!-- Populated dynamically by StatsPanel.js -->
+    </section>
+
+    <!-- Main Interactive Grid -->
+    <main class="main-grid">
+      <!-- Left Panel: Worker Slots & Dispatcher -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3>Active Concurrency Slots (Limit: 4)</h3>
+          <span style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-dim);">asyncio.Semaphore / PriorityQueue</span>
+        </div>
+
+        <div id="workerSlotsContainer" class="slots-container">
+          <!-- Populated dynamically by WorkerGrid.js -->
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">Simulate Job Ingestion</h4>
+          <div class="dispatch-form">
+            <div class="form-group">
+              <label for="taskType">Workload Type</label>
+              <select id="taskType" class="form-control">
+                <option value="Payment Settlement">Payment Settlement</option>
+                <option value="Webhook Dispatch">Webhook Dispatch</option>
+                <option value="ETL Chunk Ingestion">ETL Chunk Ingestion</option>
+                <option value="Audit Ledger Hash">Audit Ledger Hash</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="taskCount">Batch Size</label>
+              <input type="number" id="taskCount" class="form-control" value="6" min="1" max="25">
+            </div>
+
+            <div class="form-group">
+              <label for="priorityLevel">Scheduling Priority</label>
+              <select id="priorityLevel" class="form-control">
+                <option value="1">P1 — Critical / Real-Time</option>
+                <option value="2" selected>P2 — Standard Priority</option>
+                <option value="3">P3 — Low / Background Batch</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="failureRate">Simulated Flakiness</label>
+              <select id="failureRate" class="form-control">
+                <option value="0.0">0% (Rock Solid)</option>
+                <option value="0.25" selected>25% (Triggers Retries)</option>
+                <option value="0.5">50% (High Volatility)</option>
+              </select>
+            </div>
+            
+            <input type="hidden" id="taskDuration" value="0.8">
+          </div>
+
+          <div class="action-buttons">
+            <button id="btnDispatch" class="btn btn-primary">
+              ⚡ Enqueue Batch of 6 Tasks
+            </button>
+            <button id="btnClear" class="btn btn-secondary" title="Reset counters">
+              ↺ Reset
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Telemetry & Log Stream -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3>Task Execution Telemetry</h3>
+          <span style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">Polling 800ms</span>
+        </div>
+
+        <div id="activityStream" class="log-stream">
+          <!-- Populated dynamically by TaskQueueView.js -->
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+          💡 <strong>Senior Architecture Note:</strong> Unlike naive thread pools that consume OS kernel threads per task, this system handles concurrent workflows within a single non-blocking event loop with cooperative yielding.
+        </div>
+      </section>
+    </main>
   </div>
 
-  <script>
-    let queue = [];
-    let workers = [false, false, false];
-    let jobId = 0;
-
-    function dispatchBatch() {
-      for (let i = 0; i < 6; i++) {
-        jobId++;
-        queue.push({ id: jobId, retries: 0 });
-      }
-      document.getElementById('queueCount').textContent = queue.length;
-      processQueue();
-    }
-
-    function processQueue() {
-      for (let i = 0; i < workers.length; i++) {
-        if (!workers[i] && queue.length > 0) {
-          const job = queue.shift();
-          executeJob(i, job);
-        }
-      }
-      document.getElementById('queueCount').textContent = queue.length;
-    }
-
-    function executeJob(slot, job) {
-      workers[slot] = true;
-      const el = document.getElementById(`w${slot}`);
-      el.className = "worker-slot active";
-      el.innerHTML = `Worker #${slot + 1}<br>Job #${job.id}`;
-
-      const log = document.getElementById('activityLog');
-      log.innerHTML = `<div>[Worker #${slot + 1}] Processing Job #${job.id}...</div>` + log.innerHTML;
-
-      setTimeout(() => {
-        // Random flaky failure with retry
-        if (job.id % 3 === 0 && job.retries === 0) {
-          job.retries++;
-          log.innerHTML = `<div style="color: #f59e0b;">[Worker #${slot + 1}] ⚠️ Job #${job.id} transient failure. Exponential backoff retry...</div>` + log.innerHTML;
-          queue.unshift(job);
-        } else {
-          log.innerHTML = `<div style="color: #10b981;">[Worker #${slot + 1}] ✔ Completed Job #${job.id} successfully.</div>` + log.innerHTML;
-        }
-
-        workers[slot] = false;
-        el.className = "worker-slot";
-        el.innerHTML = `Worker #${slot + 1}<br>IDLE`;
-        processQueue();
-      }, 1200);
-    }
-  </script>
+  <script type="module" src="static/js/app.js"></script>
 </body>
 </html>

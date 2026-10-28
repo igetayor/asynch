@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ige Async Worker Pool — Resilient Concurrency Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <div class="badge-tag">
+          <span class="pulse-dot"></span>
+          Python 3.10+ AsyncIO Engine
+        </div>
+        <h1 class="dashboard-title">Async Worker Pool Manager</h1>
+        <p class="dashboard-sub">
+          High-throughput coroutine worker pool featuring bounded concurrency, priority queue dispatch, exponential backoff retries, and real-time execution telemetry.
+        </p>
+      </div>
+
+      <div class="header-status-pill">
+        <span style="color: var(--text-dim);">PORT:</span>
+        <span style="color: #38bdf8; font-weight: 700;">8091</span>
+        <span style="margin: 0 0.25rem; color: var(--border-subtle);">|</span>
+        <span style="color: #10b981; font-weight: 600;">ACTIVE</span>
+      </div>
+    </header>
+
+    <!-- Top Metrics Ribbon -->
+    <section id="metricsContainer" class="metrics-grid">
+      <!-- Populated dynamically by StatsPanel.js -->
+    </section>
+
+    <!-- Main Interactive Grid -->
+    <main class="main-grid">
+      <!-- Left Panel: Worker Slots & Dispatcher -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3>Active Concurrency Slots (Limit: 4)</h3>
+          <span style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-dim);">asyncio.Semaphore / PriorityQueue</span>
+        </div>
+
+        <div id="workerSlotsContainer" class="slots-container">
+          <!-- Populated dynamically by WorkerGrid.js -->
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">Simulate Job Ingestion</h4>
+          <div class="dispatch-form">
+            <div class="form-group">
+              <label for="taskType">Workload Type</label>
+              <select id="taskType" class="form-control">
+                <option value="Payment Settlement">Payment Settlement</option>
+                <option value="Webhook Dispatch">Webhook Dispatch</option>
+                <option value="ETL Chunk Ingestion">ETL Chunk Ingestion</option>
+                <option value="Audit Ledger Hash">Audit Ledger Hash</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="taskCount">Batch Size</label>
+              <input type="number" id="taskCount" class="form-control" value="6" min="1" max="25">
+            </div>
+
+            <div class="form-group">
+              <label for="priorityLevel">Scheduling Priority</label>
+              <select id="priorityLevel" class="form-control">
+                <option value="1">P1 — Critical / Real-Time</option>
+                <option value="2" selected>P2 — Standard Priority</option>
+                <option value="3">P3 — Low / Background Batch</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="failureRate">Simulated Flakiness</label>
+              <select id="failureRate" class="form-control">
+                <option value="0.0">0% (Rock Solid)</option>
+                <option value="0.25" selected>25% (Triggers Retries)</option>
+                <option value="0.5">50% (High Volatility)</option>
+              </select>
+            </div>
+            
+            <input type="hidden" id="taskDuration" value="0.8">
+          </div>
+
+          <div class="action-buttons">
+            <button id="btnDispatch" class="btn btn-primary">
+              ⚡ Enqueue Batch of 6 Tasks
+            </button>
+            <button id="btnClear" class="btn btn-secondary" title="Reset counters">
+              ↺ Reset
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Telemetry & Log Stream -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3>Task Execution Telemetry</h3>
+          <span style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">Polling 800ms</span>
+        </div>
+
+        <div id="activityStream" class="log-stream">
+          <!-- Populated dynamically by TaskQueueView.js -->
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+          💡 <strong>Senior Architecture Note:</strong> Unlike naive thread pools that consume OS kernel threads per task, this system handles concurrent workflows within a single non-blocking event loop with cooperative yielding.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
