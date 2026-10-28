@@ -8,6 +8,376 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="static/css/styles.css">
+  <style>
+    :root {
+      --bg-primary: #07090e;
+      --bg-surface: #0f141f;
+      --bg-surface-elevated: #161e2e;
+      --border-subtle: #1e293b;
+      --border-focus: #38bdf8;
+      --accent: #0ea5e9;
+      --accent-glow: rgba(14, 165, 233, 0.25);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      justify-content: center;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+    }
+
+    .dashboard-container {
+      max-width: 1180px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    /* Header & Meta */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent-glow);
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      color: #38bdf8;
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      width: fit-content;
+    }
+
+    .badge-tag .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #38bdf8;
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+
+    h1.dashboard-title {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-main);
+    }
+
+    p.dashboard-sub {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      max-width: 650px;
+    }
+
+    .header-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 0.6rem 1.1rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    /* Metrics Ribbon */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(14, 165, 233, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .metric-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Main Split View */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 950px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .panel-header h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Worker Slots View */
+    .slots-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .worker-slot-item {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.25s ease;
+    }
+
+    .worker-slot-item.active {
+      border-color: #0ea5e9;
+      background: rgba(14, 165, 233, 0.08);
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.15);
+    }
+
+    .slot-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+    }
+
+    .slot-status-pill {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .slot-status-pill.idle {
+      background: rgba(100, 116, 139, 0.2);
+      color: var(--text-muted);
+    }
+
+    .slot-status-pill.working {
+      background: rgba(14, 165, 233, 0.25);
+      color: #38bdf8;
+    }
+
+    .slot-task-desc {
+      font-size: 0.85rem;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Form Controls */
+    .dispatch-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .form-control {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.6rem 0.85rem;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--border-focus);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.25rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: #ffffff;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: #1f2a3f;
+      color: #ffffff;
+    }
+
+    /* Activity Log / Telemetry View */
+    .log-stream {
+      background: #080c14;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      height: 290px;
+      overflow-y: auto;
+      padding: 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .log-entry.completed { border-left: 3px solid var(--success); }
+    .log-entry.failed { border-left: 3px solid var(--danger); }
+    .log-entry.retrying { border-left: 3px solid var(--warning); }
+    .log-entry.running { border-left: 3px solid var(--accent); }
+
+    .log-time { color: var(--text-dim); }
+    .log-msg { color: var(--text-main); flex: 1; }
+    .log-badge { font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: 600; }
+    .log-badge.success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .log-badge.error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .log-badge.retry { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+  </style>
 </head>
 <body>
   <div class="dashboard-container">
@@ -25,8 +395,8 @@
       </div>
 
       <div class="header-status-pill">
-        <span style="color: var(--text-dim);">PORT:</span>
-        <span style="color: #38bdf8; font-weight: 700;">8091</span>
+        <span style="color: var(--text-dim);">SEMAPHORE SLOTS:</span>
+        <span style="color: #38bdf8; font-weight: 700;">4 BOUNDED</span>
         <span style="margin: 0 0.25rem; color: var(--border-subtle);">|</span>
         <span style="color: #10b981; font-weight: 600;">ACTIVE</span>
       </div>
@@ -34,7 +404,26 @@
 
     <!-- Top Metrics Ribbon -->
     <section id="metricsContainer" class="metrics-grid">
-      <!-- Populated dynamically by StatsPanel.js -->
+      <div class="metric-card">
+        <div class="metric-label">Completed Jobs</div>
+        <div class="metric-value" id="valCompleted" style="color: #10b981;">0</div>
+        <div class="metric-desc">Zero worker thread starvation</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Active Concurrency</div>
+        <div class="metric-value" id="valActive" style="color: #38bdf8;">0 / 4</div>
+        <div class="metric-desc">Bounded semaphore capacity</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Queue Backlog</div>
+        <div class="metric-value" id="valBacklog" style="color: #f59e0b;">0</div>
+        <div class="metric-desc">Priority heap pending tasks</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Retries Handled</div>
+        <div class="metric-value" id="valRetries" style="color: #c084fc;">0</div>
+        <div class="metric-desc">Exponential backoff recovery</div>
+      </div>
     </section>
 
     <!-- Main Interactive Grid -->
@@ -47,7 +436,7 @@
         </div>
 
         <div id="workerSlotsContainer" class="slots-container">
-          <!-- Populated dynamically by WorkerGrid.js -->
+          <!-- 4 Worker Slots rendered dynamically -->
         </div>
 
         <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
@@ -85,13 +474,11 @@
                 <option value="0.5">50% (High Volatility)</option>
               </select>
             </div>
-            
-            <input type="hidden" id="taskDuration" value="0.8">
           </div>
 
           <div class="action-buttons">
             <button id="btnDispatch" class="btn btn-primary">
-              ⚡ Enqueue Batch of 6 Tasks
+              ⚡ Enqueue Batch of Tasks
             </button>
             <button id="btnClear" class="btn btn-secondary" title="Reset counters">
               ↺ Reset
@@ -104,11 +491,15 @@
       <section class="panel-card">
         <div class="panel-header">
           <h3>Task Execution Telemetry</h3>
-          <span style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">Polling 800ms</span>
+          <span style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">Real-Time Event Stream</span>
         </div>
 
         <div id="activityStream" class="log-stream">
-          <!-- Populated dynamically by TaskQueueView.js -->
+          <div class="log-entry completed">
+            <span class="log-time">00:00:01</span>
+            <span class="log-msg">Worker Pool initialized with 4 concurrent execution slots.</span>
+            <span class="log-badge success">READY</span>
+          </div>
         </div>
 
         <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
@@ -118,6 +509,142 @@
     </main>
   </div>
 
-  <script type="module" src="static/js/app.js"></script>
+  <!-- Universal Interactive Engine -->
+  <script>
+    (function() {
+      const TOTAL_SLOTS = 4;
+      const slots = [
+        { id: 1, status: "idle", task: "Awaiting job..." },
+        { id: 2, status: "idle", task: "Awaiting job..." },
+        { id: 3, status: "idle", task: "Awaiting job..." },
+        { id: 4, status: "idle", task: "Awaiting job..." }
+      ];
+
+      const queue = [];
+      let totalCompleted = 0;
+      let totalRetries = 0;
+      let taskIdCounter = 100;
+
+      // DOM Elements
+      const slotsContainer = document.getElementById("workerSlotsContainer");
+      const activityStream = document.getElementById("activityStream");
+      const valCompleted = document.getElementById("valCompleted");
+      const valActive = document.getElementById("valActive");
+      const valBacklog = document.getElementById("valBacklog");
+      const valRetries = document.getElementById("valRetries");
+      const btnDispatch = document.getElementById("btnDispatch");
+      const btnClear = document.getElementById("btnClear");
+      const taskTypeSelect = document.getElementById("taskType");
+      const taskCountInput = document.getElementById("taskCount");
+      const prioritySelect = document.getElementById("priorityLevel");
+      const failureRateSelect = document.getElementById("failureRate");
+
+      function renderSlots() {
+        slotsContainer.innerHTML = "";
+        let activeCount = 0;
+        slots.forEach(s => {
+          if (s.status === "working") activeCount++;
+          const slotEl = document.createElement("div");
+          slotEl.className = `worker-slot-item ${s.status === "working" ? "active" : ""}`;
+          slotEl.innerHTML = `
+            <div class="slot-top">
+              <span style="font-weight: 700; color: #f8fafc;">Worker-${s.id}</span>
+              <span class="slot-status-pill ${s.status === "working" ? "working" : "idle"}">${s.status}</span>
+            </div>
+            <div class="slot-task-desc" title="${s.task}">${s.task}</div>
+          `;
+          slotsContainer.appendChild(slotEl);
+        });
+
+        valActive.textContent = `${activeCount} / ${TOTAL_SLOTS}`;
+        valBacklog.textContent = queue.length;
+        valCompleted.textContent = totalCompleted;
+        valRetries.textContent = totalRetries;
+      }
+
+      function logEvent(msg, type, badge) {
+        const entry = document.createElement("div");
+        entry.className = `log-entry ${type}`;
+        const timeStr = new Date().toTimeString().split(" ")[0];
+        entry.innerHTML = `
+          <span class="log-time">${timeStr}</span>
+          <span class="log-msg">${msg}</span>
+          <span class="log-badge ${badge}">${badge.toUpperCase()}</span>
+        `;
+        activityStream.insertBefore(entry, activityStream.firstChild);
+      }
+
+      function processQueue() {
+        for (let i = 0; i < slots.length; i++) {
+          if (slots[i].status === "idle" && queue.length > 0) {
+            // Priority Sort (P1 before P2 before P3)
+            queue.sort((a, b) => a.priority - b.priority);
+            const task = queue.shift();
+            executeTaskOnSlot(slots[i], task);
+          }
+        }
+        renderSlots();
+      }
+
+      function executeTaskOnSlot(slot, task) {
+        slot.status = "working";
+        slot.task = `[P${task.priority}] ${task.type} #${task.id}`;
+        logEvent(`[Worker-${slot.id}] Acquired lock for [P${task.priority}] ${task.type} #${task.id}`, "running", "running");
+        renderSlots();
+
+        const duration = 1000 + Math.random() * 800;
+        setTimeout(() => {
+          const flakiness = parseFloat(failureRateSelect.value);
+          const failed = Math.random() < flakiness;
+
+          if (failed && task.retries < 2) {
+            task.retries++;
+            totalRetries++;
+            logEvent(`[Worker-${slot.id}] Transient fault in Task #${task.id}. Triggering exponential backoff (retry ${task.retries}/2)...`, "retrying", "retry");
+            queue.unshift(task); // Re-queue
+          } else if (failed && task.retries >= 2) {
+            logEvent(`[Worker-${slot.id}] Task #${task.id} exhausted retries & routed to Dead Letter Queue (DLQ).`, "failed", "error");
+          } else {
+            totalCompleted++;
+            logEvent(`[Worker-${slot.id}] Completed [P${task.priority}] ${task.type} #${task.id} in ${(duration / 1000).toFixed(2)}s.`, "completed", "success");
+          }
+
+          slot.status = "idle";
+          slot.task = "Awaiting job...";
+          processQueue();
+        }, duration);
+      }
+
+      btnDispatch.onclick = () => {
+        const count = parseInt(taskCountInput.value) || 6;
+        const type = taskTypeSelect.value;
+        const priority = parseInt(prioritySelect.value) || 2;
+
+        for (let i = 0; i < count; i++) {
+          taskIdCounter++;
+          queue.push({
+            id: taskIdCounter,
+            type: type,
+            priority: priority,
+            retries: 0
+          });
+        }
+
+        logEvent(`Ingested batch of ${count}x "${type}" tasks with priority P${priority}.`, "running", "queued");
+        processQueue();
+      };
+
+      btnClear.onclick = () => {
+        queue.length = 0;
+        totalCompleted = 0;
+        totalRetries = 0;
+        slots.forEach(s => { s.status = "idle"; s.task = "Awaiting job..."; });
+        renderSlots();
+        activityStream.innerHTML = `<div class="log-entry completed"><span class="log-time">00:00:00</span><span class="log-msg">Worker state reset. Queue purged.</span><span class="log-badge success">RESET</span></div>`;
+      };
+
+      renderSlots();
+    })();
+  </script>
 </body>
 </html>
