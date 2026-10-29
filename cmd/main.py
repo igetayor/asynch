@@ -1,20 +1,22 @@
 """
-CLI runner and demonstration harness for the Ige Async Worker Pool.
-Allows running benchmark simulations directly or serving the web dashboard.
+Entrypoint for the Async Worker Pool.
+
+Usage:
+  python -m cmd.main                  # Run CLI benchmark (12 tasks, 4 workers)
+  python -m cmd.main --serve          # Launch web dashboard on port 8091
+  python -m cmd.main -c 8 -n 30      # Benchmark with 8 workers, 30 tasks
 """
 
 import sys
 import argparse
 import asyncio
 import random
-from pool import AsyncWorkerPool, AsyncTask
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 
-async def simulate_api_call(user_id: int):
-    # Simulate slight network jitter
+async def _simulate_api_call(user_id: int):
     await asyncio.sleep(0.06)
     if user_id % 7 == 0:
         if random.random() < 0.65:
@@ -23,6 +25,8 @@ async def simulate_api_call(user_id: int):
 
 
 async def run_benchmark(concurrency: int = 4, total_tasks: int = 15):
+    from backend.core.pool import AsyncWorkerPool, AsyncTask
+
     print("=" * 65)
     print("[*] Ige AsyncIO Worker Pool -- Bounded Concurrency & Telemetry")
     print("=" * 65)
@@ -34,12 +38,11 @@ async def run_benchmark(concurrency: int = 4, total_tasks: int = 15):
     tasks = []
     print(f"\n[2] Enqueueing {total_tasks} asynchronous background jobs...")
     for i in range(1, total_tasks + 1):
-        # Alternate priorities
         priority = 1 if i % 5 == 0 else 2
         t = AsyncTask(
             task_id=f"job_{i:03d}",
             name=f"Transaction #{i:03d}",
-            fn=simulate_api_call,
+            fn=_simulate_api_call,
             args=(i,),
             priority=priority,
             max_retries=2,
@@ -48,35 +51,33 @@ async def run_benchmark(concurrency: int = 4, total_tasks: int = 15):
         tasks.append(t)
         await pool.submit(t)
 
-    print(f"All {total_tasks} jobs enqueued. Processing with bounded concurrency...\n")
+    print(f"All {total_tasks} jobs enqueued. Processing...\n")
     await pool.stop(drain=True)
 
     print("[3] Job Execution Summary:")
     for t in tasks:
         status = "COMPLETED" if t.status.value == "COMPLETED" else f"FAILED ({t.error})"
         retries = f"(Retried: {t.retries}x)" if t.retries > 0 else ""
-        priority_lbl = f"[P{t.priority}]"
-        print(f" - {priority_lbl} {t.task_id} ({t.name}): {status} {retries} -> {t.execution_duration_ms:.1f}ms")
+        print(f" - [P{t.priority}] {t.task_id} ({t.name}): {status} {retries} -> {t.execution_duration_ms:.1f}ms")
 
     stats = pool.get_stats()
     print(f"\n[4] Execution Telemetry:")
     print(f"   - Successfully Completed: {stats['processed_count']}")
     print(f"   - Permanent Failures:     {stats['failure_count']}")
     print(f"   - Total Retry Attempts:   {stats['retry_count']}")
-    print("\n[+] Zero Redis or Celery dependencies required. Clean, resilient Python concurrency.")
+    print("\n[+] Zero Redis or Celery dependencies. Clean, resilient Python concurrency.")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Ige Async Worker Pool Runner")
-    parser.add_argument("--concurrency", "-c", type=int, default=4, help="Number of worker slots")
-    parser.add_argument("--tasks", "-n", type=int, default=12, help="Number of jobs to dispatch")
-    parser.add_argument("--serve", "-s", action="store_true", help="Launch embedded web server on port 8091")
-    parser.add_argument("--port", "-p", type=int, default=8091, help="Port to listen on in serve mode")
-
+    parser = argparse.ArgumentParser(description="Ige Async Worker Pool")
+    parser.add_argument("--concurrency", "-c", type=int, default=4)
+    parser.add_argument("--tasks", "-n", type=int, default=12)
+    parser.add_argument("--serve", "-s", action="store_true")
+    parser.add_argument("--port", "-p", type=int, default=8091)
     args = parser.parse_args()
 
     if args.serve:
-        from server import start_server
+        from backend.api.server import start_server
         start_server(args.port)
     else:
         asyncio.run(run_benchmark(concurrency=args.concurrency, total_tasks=args.tasks))
